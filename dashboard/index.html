@@ -1,13 +1,372 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
+
+<head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+    <title>HonoSphere Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for better UX in charts container */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f3f4f6;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        /* Fullscreen styles */
+        :fullscreen {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        :fullscreen canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* Ensure chart container takes full available space in fullscreen */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 350px;
+        }
+
+        :fullscreen .chart-container {
+            height: 100%;
+        }
+
+        /* Full Screen button within chart container */
+        .fs-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            z-index: 10;
+        }
+
+        /* Exit Full Screen button within full screen container */
+        .exit-fs-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1000;
+            background: #e2e8f0;
+            color: #374151;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 font-sans text-gray-700">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-6 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <h1 class="text-3xl md:text-4xl font-extrabold">HonoSphere Dashboard</h1>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="max-w-7xl mx-auto p-6">
+        <!-- Filter Form -->
+        <section class="mb-8">
+            <div class="flex flex-col md:flex-row items-center gap-4 bg-white p-4 rounded-lg shadow-md">
+                <div class="flex-1">
+                    <label for="timeFilter" class="block mb-1 font-medium">Time Range</label>
+                    <select id="timeFilter"
+                        class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <option value="minutes=1">Last 1 minute</option>
+                        <option value="hours=1">Last 1 hour</option>
+                        <option value="period=day">Last 1 day</option>
+                        <option value="period=week">Last 1 week</option>
+                        <option value="period=month">Last 1 month</option>
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <label for="fromDate" class="block mb-1 font-medium">From</label>
+                    <input type="datetime-local" id="fromDate"
+                        class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400">
+                </div>
+                <div class="flex-1">
+                    <label for="toDate" class="block mb-1 font-medium">To</label>
+                    <input type="datetime-local" id="toDate"
+                        class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400">
+                </div>
+                <div class="flex-shrink-0 mt-4 md:mt-0">
+                    <button onclick="fetchData()"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition-colors duration-200">
+                        Load Data
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Grid -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Chart Container Template -->
+            <div id="sensorChartContainer" class="relative bg-white shadow-lg rounded-xl p-4">
+                <button class="fs-button bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded-full text-sm"
+                    onclick="openFullscreen('sensorChartContainer')">
+                    Full Screen
+                </button>
+                <div class="chart-container">
+                    <canvas id="sensorChart"></canvas>
+                </div>
+            </div>
+            <div id="barChartContainer" class="relative bg-white shadow-lg rounded-xl p-4">
+                <button class="fs-button bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded-full text-sm"
+                    onclick="openFullscreen('barChartContainer')">
+                    Full Screen
+                </button>
+                <div class="chart-container">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+            <div id="scatterChartContainer" class="relative bg-white shadow-lg rounded-xl p-4">
+                <button class="fs-button bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded-full text-sm"
+                    onclick="openFullscreen('scatterChartContainer')">
+                    Full Screen
+                </button>
+                <div class="chart-container">
+                    <canvas id="scatterChart"></canvas>
+                </div>
+            </div>
+            <div id="histogramChartContainer" class="relative bg-white shadow-lg rounded-xl p-4">
+                <button class="fs-button bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded-full text-sm"
+                    onclick="openFullscreen('histogramChartContainer')">
+                    Full Screen
+                </button>
+                <div class="chart-container">
+                    <canvas id="histogramChart"></canvas>
+                </div>
+            </div>
+            <div id="pieChartContainer" class="relative bg-white shadow-lg rounded-xl p-4">
+                <button class="fs-button bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded-full text-sm"
+                    onclick="openFullscreen('pieChartContainer')">
+                    Full Screen
+                </button>
+                <div class="chart-container">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+            <div id="polarChartContainer" class="relative bg-white shadow-lg rounded-xl p-4">
+                <button class="fs-button bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded-full text-sm"
+                    onclick="openFullscreen('polarChartContainer')">
+                    Full Screen
+                </button>
+                <div class="chart-container">
+                    <canvas id="polarChart"></canvas>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white py-4 shadow-inner mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-sm text-gray-500">
+                Project:
+                <a href="https://github.com/Sigmakib2/HonoSphere" target="_blank" class="text-blue-600 hover:underline">
+                    HonoSphere
+                </a>
+                by      <a href="https://twitter.com/sigmakib" target="_blank" class="text-blue-600 hover:underline">
+                    sigmakib
+                </a>
+            </p>
+        </div>
+    </footer>
+    <script>
+        let lineChart, barChart, scatterChart, histogramChart, pieChart, polarChart;
+
+        async function fetchData() {
+            let filter = document.getElementById('timeFilter').value;
+            let fromDate = document.getElementById('fromDate').value;
+            let toDate = document.getElementById('toDate').value;
+
+            let url = `https://cloudflare_worker.<Your_worker_subdomain>.workers.dev/api/readings?${filter}`;
+
+            if (fromDate && toDate) {
+                const fromTimestamp = new Date(fromDate).getTime();
+                const toTimestamp = new Date(toDate).getTime();
+                url = `https://cloudflare_worker.<Your_worker_subdomain>.workers.dev/api/readings?from=${fromTimestamp}&to=${toTimestamp}`;
+            }
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                renderCharts(data);
+            } catch (err) {
+                alert('Error fetching data: ' + err.message);
+            }
+        }
+
+        function getZoomOptions() {
+            return {
+                plugins: {
+                    zoom: {
+                        zoom: {
+                            wheel: { enabled: true },
+                            pinch: { enabled: true },
+                            mode: 'xy',
+                        },
+                        pan: { enabled: true, mode: 'xy' }
+                    }
+                }
+            };
+        }
+
+        function getChartOptions() {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                ...getZoomOptions()
+            };
+        }
+
+        function renderCharts(data) {
+            if (!data.length) {
+                alert('No data available for the selected time range.');
+                return;
+            }
+
+            const labels = data.map(d => new Date(d.timestamp).toLocaleString());
+            const temperatures = data.map(d => d.temperature);
+            const humidities = data.map(d => d.humidity);
+            const avgTemp = (temperatures.reduce((a, b) => a + b, 0) / temperatures.length).toFixed(2);
+            const avgHumidity = (humidities.reduce((a, b) => a + b, 0) / humidities.length).toFixed(2);
+
+            // Destroy previous charts if they exist
+            lineChart?.destroy();
+            barChart?.destroy();
+            scatterChart?.destroy();
+            histogramChart?.destroy();
+            pieChart?.destroy();
+            polarChart?.destroy();
+
+            // Line Chart
+            lineChart = new Chart(document.getElementById('sensorChart'), {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'Temperature (°C)', data: temperatures, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.2)', tension: 0.4 },
+                        { label: 'Humidity (%)', data: humidities, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.2)', tension: 0.4 }
+                    ]
+                },
+                options: getChartOptions()
+            });
+
+            // Bar Chart
+            barChart = new Chart(document.getElementById('barChart'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'Temperature', data: temperatures, backgroundColor: '#f87171' },
+                        { label: 'Humidity', data: humidities, backgroundColor: '#60a5fa' }
+                    ]
+                },
+                options: getChartOptions()
+            });
+
+            // Scatter Chart
+            scatterChart = new Chart(document.getElementById('scatterChart'), {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        { label: 'Temp vs Humidity', data: data.map(i => ({ x: i.temperature, y: i.humidity })), backgroundColor: '#10b981' }
+                    ]
+                },
+                options: getChartOptions()
+            });
+
+            // Histogram Chart
+            histogramChart = new Chart(document.getElementById('histogramChart'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'Temperature Distribution', data: temperatures, backgroundColor: '#fb923c' }
+                    ]
+                },
+                options: getChartOptions()
+            });
+
+            // Pie Chart
+            pieChart = new Chart(document.getElementById('pieChart'), {
+                type: 'pie',
+                data: {
+                    labels: ['Avg Temperature', 'Avg Humidity'],
+                    datasets: [
+                        { data: [avgTemp, avgHumidity], backgroundColor: ['#f87171', '#60a5fa'] }
+                    ]
+                },
+                options: getChartOptions()
+            });
+
+            // Polar Chart
+            polarChart = new Chart(document.getElementById('polarChart'), {
+                type: 'polarArea',
+                data: {
+                    labels: ['Avg Temperature', 'Avg Humidity'],
+                    datasets: [
+                        { data: [avgTemp, avgHumidity], backgroundColor: ['#fb7185', '#38bdf8'] }
+                    ]
+                },
+                options: getChartOptions()
+            });
+        }
+
+        // Fullscreen Functions
+        function openFullscreen(containerId) {
+            const elem = document.getElementById(containerId);
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) { /* Safari */
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE11 */
+                elem.msRequestFullscreen();
+            }
+        }
+
+        function exitFullscreen() {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) { /* Safari */
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE11 */
+                document.msExitFullscreen();
+            }
+        }
+
+        // Listen for fullscreen changes to add or remove the exit button inside the fullscreen element
+        document.addEventListener('fullscreenchange', () => {
+            // Remove any existing exit button to avoid duplicates
+            document.querySelectorAll('.exit-fs-button').forEach(btn => btn.remove());
+            const fsElem = document.fullscreenElement;
+            if (fsElem) {
+                const exitBtn = document.createElement('button');
+                exitBtn.textContent = 'Exit Full Screen';
+                exitBtn.className = 'exit-fs-button';
+                exitBtn.onclick = exitFullscreen;
+                fsElem.appendChild(exitBtn);
+            }
+        });
+
+        // Load data on page load
+        fetchData();
+    </script>
+</body>
+
 </html>

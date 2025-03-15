@@ -1,6 +1,6 @@
 # 📡 ESP32 Sensor Dashboard Project Documentation
 
-This document outlines a complete, step-by-step guide to set up, run, and deploy an ESP32 IoT sensor dashboard project built with Hono.js, Cloudflare Workers, D1 Database, and React (using Vite).
+This document outlines a complete, step-by-step guide to set up, run, and deploy an ESP32 IoT sensor dashboard project built with Hono.js, Cloudflare Workers, D1 Database, HTML, CSS (Dashboard).
 
 ---
 
@@ -12,10 +12,9 @@ This document outlines a complete, step-by-step guide to set up, run, and deploy
   - D1 Database (Cloudflare's database service)
 
 - **Frontend:**
-  - React.js (Frontend library)
-  - Vite (Modern build tool)
-  - Recharts (Chart visualization)
-  - Axios (HTTP requests)
+  - HTML
+  - Tailwind CSS
+  - Chart.js
 
 - **Hardware:**
   - ESP32 (Microcontroller)
