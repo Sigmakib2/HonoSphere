@@ -10,14 +10,15 @@
       "database_name": "honosphere",
       "database_id": "Your-d1_databases-ID"
     }
-  ]
+  ],
+  //this AUTH_KEY should be in the ESP32 code bacause without this now data will be write in DB
+  "vars": {
+    "AUTH_KEY": "YOUR_SECURE_API_KEY"
+  }
 
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],
-  // "vars": {
-  //   "MY_VAR": "my-variable"
-  // },
   // "kv_namespaces": [
   //   {
   //     "binding": "MY_KV_NAMESPACE",

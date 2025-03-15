@@ -3,14 +3,22 @@ import { cors } from 'hono/cors';
 
 type Env = {
   DB: D1Database;
+  AUTH_KEY: string;
 };
 
 const app = new Hono<{ Bindings: Env }>();
 
 app.use('/api/*', cors());
 
-// Endpoint to save ESP32 sensor data
+// Endpoint to save ESP32 sensor data with API key validation
 app.post('/api/sensor', async (c) => {
+  const apiKey = c.req.header('x-api-key');
+  const expectedKey = c.env.AUTH_KEY;
+
+  if (!expectedKey || apiKey !== expectedKey) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
   const { temperature, humidity } = await c.req.json();
   const timestamp = Date.now();
 
