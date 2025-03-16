@@ -274,4 +274,83 @@ async function fetchData() {
 ```
 Here you have to change this URL with the endpoint you got from the cloudflare. Open it with live server or any other method and if everything is right you will find out the data.
 
+![HonoSphere Dashboard](https://raw.githubusercontent.com/Sigmakib2/HonoSphere/refs/heads/main/esp32_firmware/diagrams/dashboard.png)
+
+User Interaction Flow
+
+1. **Selecting a Time Range:**  
+   - The user can choose a predefined time range (last 1 minute, hour, day, week, or month) from the dropdown.
+   - Alternatively, custom "From" and "To" datetime values can be entered.
+
+2. **Loading Data:**  
+   - Clicking the "Load Data" button triggers `fetchData()`, which constructs the query URL based on the selected filters and fetches the sensor data from the API endpoint.
+
+3. **Chart Visualization:**  
+   - Upon data retrieval, `renderCharts(data)` processes the data and renders six different types of charts.
+   - Users can interact with the charts (zoom, pan) using the Chart.js zoom plugin.
+
+4. **Full-Screen Mode:**  
+   - Each chart container has a full-screen button that triggers the full-screen mode using `openFullscreen()`.
+   - When in full-screen mode, an "Exit Full Screen" button appears to allow the user to revert to normal view.
+
+Data Fetching and Rendering
+
+- **`fetchData()` Function:**  
+  - **Purpose:** Retrieves sensor data from the API endpoint.
+  - **How it Works:**  
+    - Reads filter values from the form (time range, from, and to dates).
+    - Constructs the API URL based on selected query parameters. If custom dates are provided, it converts them to timestamps.
+    - Fetches data from the endpoint and handles errors.
+    - Calls `renderCharts(data)` to update the charts.
+
+- **`renderCharts(data)` Function:**  
+  - **Purpose:** Processes and renders sensor data into charts.
+  - **Operations:**  
+    - Verifies if data exists; alerts the user if empty.
+    - Extracts timestamps, temperature, and humidity values from the data.
+    - Computes average temperature and humidity.
+    - Destroys any previously rendered charts to avoid duplication.
+    - Creates new chart instances using Chart.js for each of the six chart types:
+      - **Line Chart:** Plots temperature and humidity trends over time.
+      - **Bar Chart:** Displays temperature and humidity as bars.
+      - **Scatter Chart:** Plots temperature against humidity.
+      - **Histogram Chart:** Displays temperature distribution using a bar chart format.
+      - **Pie Chart & Polar Chart:** Compare average temperature and humidity.
+
+Chart Configuration
+
+- **`getZoomOptions()` Function:**  
+  - **Purpose:** Provides configuration for enabling zoom and pan features.
+  - **Options:**  
+    - Enables mouse wheel and pinch zooming.
+    - Enables panning in both x and y directions.
+
+- **`getChartOptions()` Function:**  
+  - **Purpose:** Returns base configuration for all charts.
+  - **Configuration:**  
+    - Responsive and disables aspect ratio maintenance.
+    - Merges with zoom options from `getZoomOptions()`.
+
+Full-Screen Mode
+
+- **`openFullscreen(containerId)` Function:**  
+  - **Purpose:** Requests full-screen display for a given chart container.
+  - **Browser Support:**  
+    - Checks for standard, WebKit, and IE11 full-screen methods.
+
+- **`exitFullscreen()` Function:**  
+  - **Purpose:** Exits full-screen mode.
+  - **Browser Support:**  
+    - Handles standard and vendor-prefixed exit methods.
+
+- **Fullscreen Event Listener:**  
+  - **Functionality:**  
+    - Listens for changes in full-screen status.
+    - Dynamically adds an "Exit Full Screen" button inside the full-screen element.
+    - Ensures removal of duplicate exit buttons when leaving full-screen.
+
+Automatic Data Load
+
+- On page load, `fetchData()` is automatically called to render the charts with the latest available data.
+
 ---
